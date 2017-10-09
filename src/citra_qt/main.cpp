@@ -253,6 +253,7 @@ void GMainWindow::InitializeHotkeys() {
             SLOT(OnStartGame()));
     connect(GetHotkey("Main Window", "Swap Screens", render_window), SIGNAL(activated()), this,
             SLOT(OnSwapScreens()));
+    connect(render_window, &GRenderWindow::ExitFullscreen, this, &GMainWindow::OnExitFullscreen);
 }
 
 void GMainWindow::SetDefaultUIGeometry() {
@@ -326,6 +327,7 @@ void GMainWindow::ConnectMenuEvents() {
     ui.action_Show_Filter_Bar->setShortcut(tr("CTRL+F"));
     connect(ui.action_Show_Filter_Bar, &QAction::triggered, this, &GMainWindow::OnToggleFilterBar);
     connect(ui.action_Show_Status_Bar, &QAction::triggered, statusBar(), &QStatusBar::setVisible);
+    connect(ui.action_Fullscreen, &QAction::triggered, this, &GMainWindow::OnDisplayFullscreen);
 }
 
 void GMainWindow::OnDisplayTitleBars(bool show) {
@@ -629,6 +631,22 @@ void GMainWindow::OnStopGame() {
     ShutdownGame();
 }
 
+void GMainWindow::OnDisplayFullscreen() {
+    if (!ui.action_Single_Window_Mode->isChecked()) {
+        return;
+    }
+
+    ui.menubar->hide();
+    statusBar()->hide();
+    showFullScreen();
+    }
+
+void GMainWindow::OnExitFullscreen() {
+    statusBar()->setVisible(ui.action_Show_Status_Bar->isChecked());
+    ui.menubar->show();
+    showMaximized();
+}
+
 void GMainWindow::ToggleWindowMode() {
     if (ui.action_Single_Window_Mode->isChecked()) {
         // Render in the main window...
@@ -835,6 +853,17 @@ void GMainWindow::dragEnterEvent(QDragEnterEvent* event) {
 
 void GMainWindow::dragMoveEvent(QDragMoveEvent* event) {
     event->acceptProposedAction();
+}
+
+void GMainWindow::keyPressEvent(QKeyEvent* event) {
+
+    if (event->key() == Qt::Key_Return) {
+        if (event->modifiers() && Qt::AltModifier) {
+            OnExitFullscreen();
+        }
+    } else if (event->key() == Qt::Key_Escape) {
+        OnExitFullscreen();
+    }
 }
 
 bool GMainWindow::ConfirmChangeGame() {
